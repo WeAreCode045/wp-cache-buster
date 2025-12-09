@@ -1,9 +1,8 @@
 jQuery(document).ready(function($){
     var table;
+
     function initDataTable(){
-        if($.fn.DataTable.isDataTable('#wpcb-assets-table')){
-            table.destroy();
-        }
+        if(table) table.destroy(); // destroy alleen als table al bestaat
 
         table = $('#wpcb-assets-table').DataTable({
             dom: 'Bfrtip',

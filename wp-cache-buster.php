@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Cache Buster & Asset Scanner
 Description: Scan assets, flush caches, view last-edited pages, full site asset overview with Tailwind + DataTables
-Version: 1.2
+Version: 1.3
 Author: Your Name
 */
 
@@ -89,7 +89,7 @@ class WPCB_Plugin {
 
     // Admin page
     public function page_assets(){
-        include plugin_dir_path(__FILE__).'templates/template-assets-page.php';
+        include plugin_dir_path(__FILE__).'template-assets-page.php';
     }
 
     // AJAX flush GoDaddy cache
