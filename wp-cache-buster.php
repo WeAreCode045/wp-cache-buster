@@ -50,7 +50,7 @@ class WPCB_Plugin {
         wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
         // Tailwind via Play CDN
-        echo '<script src="https://cdn.tailwindcss.com"></script>';
+        wp_enqueue_script('tailwindcss','https://cdn.tailwindcss.com',[],null,false);
 
         // Admin CSS & JS met cache-busting
         wp_enqueue_style(
