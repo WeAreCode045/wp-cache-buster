@@ -48,40 +48,40 @@ class WPCB_Plugin {
 
     // ---------------- Admin Assets ----------------
     public function load_admin_assets($hook){
-        if(strpos($hook,'wpcb_plugin')===false) return;
+    if(strpos($hook,'wpcb_plugin')===false) return;
 
-        wp_enqueue_script('jquery');
+    wp_enqueue_script('jquery');
 
-        // DataTables
-        wp_enqueue_script('datatables-js','https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js',['jquery'],null,true);
-        wp_enqueue_script('datatables-buttons-js','https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',['jquery','datatables-js'],null,true);
-        wp_enqueue_script('datatables-html5-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',['jquery','datatables-buttons-js'],null,true);
-        wp_enqueue_script('datatables-print-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js',['jquery','datatables-buttons-js'],null,true);
+    // DataTables scripts & styles
+    wp_enqueue_script('datatables-js','https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js',['jquery'],null,true);
+    wp_enqueue_script('datatables-buttons-js','https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',['jquery','datatables-js'],null,true);
+    wp_enqueue_script('datatables-html5-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',['jquery','datatables-buttons-js'],null,true);
+    wp_enqueue_script('datatables-print-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js',['jquery','datatables-buttons-js'],null,true);
 
-        wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
-        wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
+    wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
+    wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-        // Tailwind via CDN
-        wp_enqueue_style('tailwind-css','https://cdn.tailwindcss.com', [], null);
+    // Tailwind in admin
+    wp_enqueue_style('tailwind-admin','https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css', [], null);
 
-        // Admin JS
-        wp_enqueue_script(
-            'wpcb-admin-js',
-            plugin_dir_url(__FILE__) . 'assets/js/admin.js',
-            ['jquery'],
-            null,
-            true
-        );
+    // Admin JS
+    wp_enqueue_script(
+        'wpcb-admin-js',
+        plugin_dir_url(__FILE__) . 'assets/js/admin.js',
+        ['jquery'],
+        null,
+        true
+    );
 
-        wp_localize_script('wpcb-admin-js','WPCB',[
-            'ajax'=>admin_url('admin-ajax.php'),
-            'nonce'=>wp_create_nonce('wpcb_nonce'),
-            'fallback'=>[
-                'wpcb_full_site_scan'=>admin_url('plugin-install.php?tab=gd-recommended&wpaas_action=flush_cache&wpaas_nonce=adbeee6fe2'),
-                'wpcb_object_flush'=>admin_url('options-general.php?page=objectcache&action=flush-cache&_wpnonce=61657c6cb4'),
-            ]
-        ]);
-    }
+    wp_localize_script('wpcb-admin-js','WPCB',[
+        'ajax'=>admin_url('admin-ajax.php'),
+        'nonce'=>wp_create_nonce('wpcb_nonce'),
+        'fallback'=>[
+            'wpcb_full_site_scan'=>admin_url('plugin-install.php?tab=gd-recommended&wpaas_action=flush_cache&wpaas_nonce=adbeee6fe2'),
+            'wpcb_object_flush'=>admin_url('options-general.php?page=objectcache&action=flush-cache&_wpnonce=61657c6cb4'),
+        ]
+    ]);
+}
 
     // ---------------- Frontend Assets ----------------
     public function load_frontend_assets(){
