@@ -50,11 +50,17 @@ class WPCB_Plugin {
         include plugin_dir_path(__FILE__) . 'template-assets-page.php';
     }
 
-    function load_admin_assets() {
-        wp_enqueue_style('wpcb-admin', plugin_dir_url(__FILE__).'assets/css/admin.css', [], false);
-        wp_enqueue_script('wpcb-admin', plugin_dir_url(__FILE__).'assets/js/admin.js', ['jquery'], false, true);
-        wp_localize_script('wpcb-admin', 'WPCB', ['ajax'=>admin_url('admin-ajax.php'),'nonce'=>wp_create_nonce('wpcb_nonce')]);
-    }
+   function load_admin_assets() {
+    // Tailwind via CDN
+    wp_enqueue_style('wpcb-tailwind', 'https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css', [], null);
+
+    // Je eigen admin styles (optioneel)
+    wp_enqueue_style('wpcb-admin', plugin_dir_url(__FILE__).'assets/css/admin.css', [], false);
+
+    // JS
+    wp_enqueue_script('wpcb-admin', plugin_dir_url(__FILE__).'assets/js/admin.js', ['jquery'], false, true);
+    wp_localize_script('wpcb-admin', 'WPCB', ['ajax'=>admin_url('admin-ajax.php'),'nonce'=>wp_create_nonce('wpcb_nonce')]);
+}
 
     /*------------------------------
         Frontend
