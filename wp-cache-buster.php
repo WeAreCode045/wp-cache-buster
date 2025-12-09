@@ -81,7 +81,13 @@ class WPCB_Plugin {
         wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
         wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-        wp_enqueue_script('wpcb-admin-js',plugins_url('admin.js',__FILE__),['jquery'],null,true);
+wp_enqueue_script(
+    'wpcb-admin-js',
+    plugin_dir_url(__FILE__) . 'assets/js/admin.js', // juiste locatie
+    ['jquery'],
+    null,
+    true
+);
         wp_localize_script('wpcb-admin-js','WPCB',[
             'ajax'=>admin_url('admin-ajax.php'),
             'nonce'=>wp_create_nonce('wpcb_nonce'),
@@ -104,7 +110,13 @@ class WPCB_Plugin {
         wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
         wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-        wp_enqueue_script('wpcb-frontend-js',plugins_url('frontend-scan.js',__FILE__),['jquery'],null,true);
+wp_enqueue_script(
+    'wpcb-frontend-js',
+    plugin_dir_url(__FILE__) . 'assets/js/frontend-scan.js',
+    ['jquery'],
+    null,
+    true
+);
         wp_localize_script('wpcb-frontend-js','WPCB_SCAN',[
             'ajax'=>admin_url('admin-ajax.php'),
             'nonce'=>wp_create_nonce('wpcb_scan_nonce'),
