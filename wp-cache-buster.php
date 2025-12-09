@@ -51,12 +51,26 @@ class WPCB_Plugin {
     }
 
 function load_admin_assets($hook) {
+    // Alleen onze adminpagina
     if($hook !== 'toplevel_page_wpcb-assets') return;
 
-    wp_enqueue_style('wpcb-tailwind', 'https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css', [], null);
-    wp_enqueue_style('wpcb-admin', plugin_dir_url(__FILE__).'assets/css/admin.css', [], false);
+    // --- Optie 1: Tailwind via officiële CDN (snelle test) ---
+    echo '<script src="https://cdn.tailwindcss.com"></script>';
+
+    // --- Optie 2: Lokaal gecompileerde Tailwind (aanbevolen voor productie) ---
+    // wp_enqueue_style('wpcb-admin', plugin_dir_url(__FILE__).'assets/css/admin.css', [], false);
+
+    // Extra plugin CSS (indien nodig)
+    wp_enqueue_style('wpcb-admin-extra', plugin_dir_url(__FILE__).'assets/css/admin.css', [], false);
+
+    // JS
     wp_enqueue_script('wpcb-admin', plugin_dir_url(__FILE__).'assets/js/admin.js', ['jquery'], false, true);
-    wp_localize_script('wpcb-admin', 'WPCB', ['ajax'=>admin_url('admin-ajax.php'),'nonce'=>wp_create_nonce('wpcb_nonce')]);
+
+    // Localize AJAX
+    wp_localize_script('wpcb-admin', 'WPCB', [
+        'ajax' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('wpcb_nonce')
+    ]);
 }
 
 
