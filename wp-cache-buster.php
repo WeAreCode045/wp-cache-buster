@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Cache Buster & Asset Scanner
 Description: Scan assets, flush caches, view last-edited pages, full site asset overview with Tailwind + DataTables
-Version: 1.1
+Version: 1.2
 Author: Your Name
 */
 
@@ -16,6 +16,7 @@ class WPCB_Plugin {
         add_action('wp_ajax_wpcb_scan_all_pages', [$this,'ajax_scan_all_pages']);
         add_action('wp_ajax_wpcb_flush_cache', [$this,'ajax_flush_cache']);
         add_action('wp_ajax_wpcb_flush_object_cache', [$this,'ajax_flush_object_cache']);
+        add_action('wp_ajax_wpcb_get_assets', [$this,'ajax_get_assets']);
         add_action('manage_pages_columns', [$this,'add_last_edited_column']);
         add_action('manage_pages_custom_column', [$this,'render_last_edited_column'],10,2);
     }
@@ -88,7 +89,7 @@ class WPCB_Plugin {
 
     // Admin page
     public function page_assets(){
-        include plugin_dir_path(__FILE__).'templates/template-assets-page.php';
+        include plugin_dir_path(__FILE__).'template-assets-page.php';
     }
 
     // AJAX flush GoDaddy cache
@@ -162,6 +163,27 @@ class WPCB_Plugin {
             }
         }
         return $assets;
+    }
+
+    // AJAX return assets for DataTable live refresh
+    public function ajax_get_assets(){
+        check_ajax_referer('wpcb_nonce','nonce');
+        $assets_option = get_option('wpcb_page_assets',[]);
+        $data=[];
+        foreach($assets_option as $url=>$assets){
+            foreach(['scripts','styles'] as $type){
+                foreach($assets[$type] as $a){
+                    $data[] = [
+                        'url'=>$a['url'],
+                        'type'=>$type,
+                        'location'=>$a['location'],
+                        'group'=>$a['group'],
+                        'modified'=>$a['modified']
+                    ];
+                }
+            }
+        }
+        wp_send_json_success($data);
     }
 
     // Last edited column
