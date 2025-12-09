@@ -80,16 +80,29 @@ jQuery(document).ready(function($){
         if(!confirm('Scan all pages? This may take some time.')) return;
         var btn=$(this); btn.prop('disabled',true).text('Scanning...');
 
-        $.post(WPCB.ajax,{action:'wpcb_scan_all_pages',nonce:WPCB.nonce})
-            .done(function(res){
-                alert(res.data.message+' ('+res.data.count+' pages)');
-
+        $.ajax({
+            url: WPCB.ajax,
+            type: 'POST',
+            data: {
+                action: 'wpcb_scan_all_pages',
+                nonce: WPCB.nonce
+            },
+            timeout: 300000 // 5 minuten timeout
+        })
+        .done(function(res){
+            if(res.success){
+                alert(res.data.message + ' (' + res.data.count + ' pages)');
                 // Herlaad pagina om nieuwe gegroepeerde data te tonen
                 location.reload();
-            })
-            .fail(function(){
-                alert('Scan failed!');
+            } else {
+                alert('Scan failed: ' + (res.data && res.data.message ? res.data.message : 'Unknown error'));
                 btn.prop('disabled',false).text('Scan All Pages');
-            });
+            }
+        })
+        .fail(function(xhr, status, error){
+            console.error('Scan error:', status, error);
+            alert('Scan failed! Error: ' + status + '\nPlease check the browser console for details.');
+            btn.prop('disabled',false).text('Scan All Pages');
+        });
     });
 });

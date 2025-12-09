@@ -55,9 +55,9 @@ class WPCB_Plugin {
         // Admin CSS & JS met cache-busting
         wp_enqueue_style(
             'wpcb-admin-style',
-            plugin_dir_url(__FILE__).'assets/css/admin-tailwind.build.css',
+            plugin_dir_url(__FILE__).'assets/css/admin.css',
             [],
-            $this->cache_bust(plugin_dir_path(__FILE__).'assets/css/admin-tailwind.build.css')
+            $this->cache_bust(plugin_dir_path(__FILE__).'assets/css/admin.css')
         );
 
         wp_enqueue_script(
@@ -151,16 +151,40 @@ class WPCB_Plugin {
     // Scan all pages
     public function ajax_scan_all_pages(){
         check_ajax_referer('wpcb_nonce','nonce');
+        
+        // Verhoog execution time en memory limit voor grote sites
+        set_time_limit(300); // 5 minuten
+        ini_set('memory_limit', '256M');
+        
         $urls = $this->get_all_site_pages();
+        
+        if(empty($urls)){
+            wp_send_json_error(['message' => 'No pages found to scan']);
+            return;
+        }
+        
         $all_assets = [];
+        $scanned = 0;
+        $failed = 0;
 
         foreach($urls as $url){
-            $all_assets[$url] = $this->scan_page_assets($url);
+            $assets = $this->scan_page_assets($url);
+            if(!empty($assets['scripts']) || !empty($assets['styles'])){
+                $all_assets[$url] = $assets;
+                $scanned++;
+            } else {
+                $failed++;
+            }
         }
 
-        update_option('wpcb_page_assets',$all_assets);
+        update_option('wpcb_page_assets', $all_assets);
 
-        wp_send_json_success(['message'=>'Scan completed','count'=>count($urls)]);
+        wp_send_json_success([
+            'message' => 'Scan completed',
+            'count' => count($urls),
+            'scanned' => $scanned,
+            'failed' => $failed
+        ]);
     }
 
     private function get_all_site_pages(){
