@@ -26,7 +26,15 @@ class WPCB_Plugin {
 
     // ---------------- Admin Page ----------------
     public function add_admin_page(){
-        add_menu_page('Asset Overview','Asset Overview','manage_options','wpcb_plugin',[$this,'page_assets'],'dashicons-admin-site',100);
+        add_menu_page(
+            'Asset Overview',
+            'Asset Overview',
+            'manage_options',
+            'wpcb_plugin',
+            [$this,'page_assets'],
+            'dashicons-admin-site',
+            100
+        );
     }
 
     public function page_assets(){
@@ -36,6 +44,7 @@ class WPCB_Plugin {
             <button id="wpcb-flush-gd" class="button button-primary">Flush GoDaddy Cache</button>
             <button id="wpcb-flush-object" class="button button-secondary">Flush Object Cache</button>
             <button id="wpcb-full-scan" class="button button-secondary">Scan Entire Site</button>
+
             <table id="wpcb-assets-table" class="display min-w-full mt-4">
                 <thead>
                     <tr>
@@ -72,7 +81,11 @@ class WPCB_Plugin {
     // ---------------- Admin Assets ----------------
     public function load_admin_assets($hook){
         if(strpos($hook,'wpcb_plugin')===false) return;
+
+        // jQuery
         wp_enqueue_script('jquery');
+
+        // DataTables
         wp_enqueue_script('datatables-js','https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js',['jquery'],null,true);
         wp_enqueue_script('datatables-buttons-js','https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',['jquery','datatables-js'],null,true);
         wp_enqueue_script('datatables-html5-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',['jquery','datatables-buttons-js'],null,true);
@@ -81,13 +94,18 @@ class WPCB_Plugin {
         wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
         wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-wp_enqueue_script(
-    'wpcb-admin-js',
-    plugin_dir_url(__FILE__) . 'assets/js/admin.js', // juiste locatie
-    ['jquery'],
-    null,
-    true
-);
+        // Tailwind CSS
+        wp_enqueue_style('tailwind-css','https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css');
+
+        // Admin JS
+        wp_enqueue_script(
+            'wpcb-admin-js',
+            plugin_dir_url(__FILE__) . 'assets/js/admin.js', // correcte locatie
+            ['jquery'],
+            null,
+            true
+        );
+
         wp_localize_script('wpcb-admin-js','WPCB',[
             'ajax'=>admin_url('admin-ajax.php'),
             'nonce'=>wp_create_nonce('wpcb_nonce'),
@@ -101,7 +119,10 @@ wp_enqueue_script(
     // ---------------- Frontend Assets ----------------
     public function load_frontend_assets(){
         if(!current_user_can('manage_options')) return;
+
         wp_enqueue_script('jquery');
+
+        // DataTables frontend
         wp_enqueue_script('datatables-js','https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js',['jquery'],null,true);
         wp_enqueue_script('datatables-buttons-js','https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',['jquery','datatables-js'],null,true);
         wp_enqueue_script('datatables-html5-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',['jquery','datatables-buttons-js'],null,true);
@@ -110,13 +131,14 @@ wp_enqueue_script(
         wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
         wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-wp_enqueue_script(
-    'wpcb-frontend-js',
-    plugin_dir_url(__FILE__) . 'assets/js/frontend-scan.js',
-    ['jquery'],
-    null,
-    true
-);
+        wp_enqueue_script(
+            'wpcb-frontend-js',
+            plugin_dir_url(__FILE__) . 'assets/js/frontend-scan.js',
+            ['jquery'],
+            null,
+            true
+        );
+
         wp_localize_script('wpcb-frontend-js','WPCB_SCAN',[
             'ajax'=>admin_url('admin-ajax.php'),
             'nonce'=>wp_create_nonce('wpcb_scan_nonce'),
@@ -151,7 +173,6 @@ wp_enqueue_script(
         if(!wp_verify_nonce($nonce,'wpcb_nonce')) wp_send_json_error('Invalid nonce');
         if(!current_user_can('manage_options')) wp_send_json_error('Permission denied');
 
-        // flush object cache via WordPress
         if(function_exists('wp_cache_flush')){
             wp_cache_flush();
         }
