@@ -102,8 +102,50 @@ class WPCB_Plugin {
     // AJAX flush Object Cache
     public function ajax_flush_object_cache(){
         check_ajax_referer('wpcb_nonce','nonce');
-        wp_remote_get(admin_url('options-general.php?page=objectcache&action=flush-cache&_wpnonce='.wp_create_nonce('wpcb_objflush')));
-        wp_send_json_success(['message'=>'Object cache flushed']);
+        
+        $result = false;
+        $message = 'Object cache flush failed';
+        
+        // Probeer WordPress native flush
+        if(function_exists('wp_cache_flush')){
+            $result = wp_cache_flush();
+            $message = $result ? 'Object cache flushed successfully' : 'Object cache flush failed';
+        }
+        
+        // Als er Redis Object Cache plugin is
+        if(function_exists('wp_redis_flush_cache')){
+            wp_redis_flush_cache();
+            $result = true;
+            $message = 'Redis object cache flushed successfully';
+        }
+        
+        // Als er LiteSpeed Cache is
+        if(class_exists('LiteSpeed_Cache_API') && method_exists('LiteSpeed_Cache_API', 'purge_all')){
+            \LiteSpeed_Cache_API::purge_all();
+            $result = true;
+            $message = 'LiteSpeed cache purged successfully';
+        }
+        
+        // Als er W3 Total Cache is
+        if(function_exists('w3tc_flush_all')){
+            w3tc_flush_all();
+            $result = true;
+            $message = 'W3 Total Cache flushed successfully';
+        }
+        
+        // Als er WP Super Cache is
+        if(function_exists('wp_cache_clean_cache')){
+            global $file_prefix;
+            wp_cache_clean_cache($file_prefix, true);
+            $result = true;
+            $message = 'WP Super Cache cleaned successfully';
+        }
+        
+        if($result){
+            wp_send_json_success(['message' => $message]);
+        } else {
+            wp_send_json_error(['message' => $message]);
+        }
     }
 
     // Scan all pages
@@ -169,21 +211,31 @@ class WPCB_Plugin {
     public function ajax_get_assets(){
         check_ajax_referer('wpcb_nonce','nonce');
         $assets_option = get_option('wpcb_page_assets',[]);
-        $data=[];
-        foreach($assets_option as $url=>$assets){
+        
+        // Groepeer assets per URL en type
+        $grouped_assets = [];
+        foreach($assets_option as $page_url => $assets){
             foreach(['scripts','styles'] as $type){
-                foreach($assets[$type] as $a){
-                    $data[] = [
-                        'url'=>$a['url'],
-                        'type'=>$type,
-                        'location'=>$a['location'],
-                        'group'=>$a['group'],
-                        'modified'=>$a['modified']
-                    ];
+                if(isset($assets[$type])){
+                    foreach($assets[$type] as $a){
+                        $key = $a['url'] . '|' . $type;
+                        if(!isset($grouped_assets[$key])){
+                            $grouped_assets[$key] = [
+                                'url' => $a['url'],
+                                'type' => $type,
+                                'location' => $a['location'],
+                                'group' => $a['group'],
+                                'modified' => $a['modified'],
+                                'pages' => []
+                            ];
+                        }
+                        $grouped_assets[$key]['pages'][] = $page_url;
+                    }
                 }
             }
         }
-        wp_send_json_success($data);
+        
+        wp_send_json_success($grouped_assets);
     }
 
     // Last edited column

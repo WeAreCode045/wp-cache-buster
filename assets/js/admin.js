@@ -13,11 +13,31 @@ jQuery(document).ready(function($){
                 { extend:'pdf', className:'bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 mr-2' },
                 { extend:'print', className:'bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700' }
             ],
-            pageLength:25
+            pageLength:25,
+            columnDefs: [
+                { orderable: false, targets: 0 } // Toggle kolom niet sorteerbaar
+            ],
+            order: [[1, 'asc']] // Sorteer op URL kolom
         });
     }
 
     initDataTable();
+
+    // Toggle uitklappen van pagina's
+    $(document).on('click', '.toggle-pages', function(e){
+        e.preventDefault();
+        var targetId = $(this).data('target');
+        var detailRow = $('#detail-' + targetId);
+        var icon = $(this).find('.toggle-icon');
+        
+        if(detailRow.hasClass('hidden')){
+            detailRow.removeClass('hidden');
+            icon.text('-');
+        } else {
+            detailRow.addClass('hidden');
+            icon.text('+');
+        }
+    });
 
     // Flush GoDaddy cache
     $('#wpcb-flush-gd').on('click',function(){
@@ -28,9 +48,17 @@ jQuery(document).ready(function($){
 
     // Flush Object Cache
     $('#wpcb-flush-object').on('click',function(){
-        $.post(WPCB.ajax,{action:'wpcb_flush_object_cache',nonce:WPCB.nonce},function(res){
-            alert(res.data.message);
-        });
+        $.post(WPCB.ajax,{action:'wpcb_flush_object_cache',nonce:WPCB.nonce})
+            .done(function(res){
+                if(res.success){
+                    alert(res.data.message);
+                } else {
+                    alert('Error: ' + res.data.message);
+                }
+            })
+            .fail(function(){
+                alert('Failed to flush object cache. Please try again.');
+            });
     });
 
     // Scan All Pages
@@ -42,23 +70,8 @@ jQuery(document).ready(function($){
             .done(function(res){
                 alert(res.data.message+' ('+res.data.count+' pages)');
 
-                // Live refresh tabel
-                $.post(WPCB.ajax,{action:'wpcb_get_assets',nonce:WPCB.nonce},function(resp){
-                    if(resp.success){
-                        table.clear();
-                        resp.data.forEach(function(row){
-                            table.row.add([
-                                row.url,
-                                row.type,
-                                row.location,
-                                row.group,
-                                row.modified
-                            ]);
-                        });
-                        table.draw();
-                    }
-                    btn.prop('disabled',false).text('Scan All Pages');
-                });
+                // Herlaad pagina om nieuwe gegroepeerde data te tonen
+                location.reload();
             })
             .fail(function(){
                 alert('Scan failed!');
