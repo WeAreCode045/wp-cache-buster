@@ -26,16 +26,17 @@ jQuery(document).ready(function($){
     // Toggle uitklappen van pagina's
     $(document).on('click', '.toggle-pages', function(e){
         e.preventDefault();
+        e.stopPropagation();
         var targetId = $(this).data('target');
         var detailRow = $('#detail-' + targetId);
         var icon = $(this).find('.toggle-icon');
         
-        if(detailRow.hasClass('hidden')){
-            detailRow.removeClass('hidden');
-            icon.text('-');
-        } else {
-            detailRow.addClass('hidden');
+        if(detailRow.is(':visible')){
+            detailRow.hide();
             icon.text('+');
+        } else {
+            detailRow.show();
+            icon.text('-');
         }
     });
 

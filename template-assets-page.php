@@ -70,7 +70,7 @@ $assets_option = get_option('wpcb_page_assets', []);
                             <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold"><?php echo $page_count; ?></span>
                         </td>
                     </tr>
-                    <tr class="pages-detail hidden" id="detail-<?php echo esc_attr($unique_id); ?>">
+                    <tr class="pages-detail" id="detail-<?php echo esc_attr($unique_id); ?>" style="display: none;">
                         <td colspan="7" class="px-4 py-4 bg-gray-50">
                             <div class="ml-8">
                                 <h4 class="font-semibold mb-2">Geladen op de volgende pagina's:</h4>
