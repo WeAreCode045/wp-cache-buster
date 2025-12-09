@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: WP Cache Buster
- * Description: Scan assets, flush GoDaddy cache, last edited column.
- * Version: 1.0
+ * Description: Scan assets, flush GoDaddy cache, last edited column, Tailwind/DataTables, AJAX
+ * Version: 1.3
  * Author: Maurice
  */
 
@@ -18,10 +18,15 @@ class WPCB_Plugin {
         add_action('wp_ajax_wpcb_full_site_scan', [$this,'full_site_scan']);
         add_action('wp_ajax_wpcb_scan_url', [$this,'scan_single_url']);
         add_action('wp_ajax_wpcb_object_flush', [$this,'object_cache_flush']);
+        add_action('wp_ajax_wpcb_scan_all_pages', [$this,'scan_all_pages']);
+        add_action('wp_ajax_wpcb_get_all_pages_assets', [$this,'get_all_pages_assets']);
 
         // Last edited column
         add_filter('manage_pages_columns', [$this,'add_last_edited_column']);
         add_action('manage_pages_custom_column', [$this,'render_last_edited_column'], 10, 2);
+
+        // Admin bar button
+        add_action('admin_bar_menu', [$this,'add_scan_button_to_admin_bar'], 100);
     }
 
     // ---------------- Admin Page ----------------
@@ -38,51 +43,13 @@ class WPCB_Plugin {
     }
 
     public function page_assets(){
-        ?>
-        <div class="wrap">
-            <h1 class="text-2xl font-bold mb-4">Asset Overview</h1>
-            <button id="wpcb-flush-gd" class="button button-primary">Flush GoDaddy Cache</button>
-            <button id="wpcb-flush-object" class="button button-secondary">Flush Object Cache</button>
-            <button id="wpcb-full-scan" class="button button-secondary">Scan Entire Site</button>
-
-            <table id="wpcb-assets-table" class="display min-w-full mt-4">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>URL</th>
-                        <th>Location</th>
-                        <th>Group</th>
-                        <th>Last Modified</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php
-                $assets = get_transient('wpcb_page_assets') ?: [];
-                foreach(['styles','scripts'] as $type){
-                    if(isset($assets[$type])){
-                        foreach($assets[$type] as $a){
-                            echo "<tr>
-                                <td>$type</td>
-                                <td>{$a['url']}</td>
-                                <td>{$a['location']}</td>
-                                <td>{$a['group']}</td>
-                                <td>{$a['modified']}</td>
-                            </tr>";
-                        }
-                    }
-                }
-                ?>
-                </tbody>
-            </table>
-        </div>
-        <?php
+        include plugin_dir_path(__FILE__) . 'templates/template-assets-page.php';
     }
 
     // ---------------- Admin Assets ----------------
     public function load_admin_assets($hook){
         if(strpos($hook,'wpcb_plugin')===false) return;
 
-        // jQuery
         wp_enqueue_script('jquery');
 
         // DataTables
@@ -94,13 +61,13 @@ class WPCB_Plugin {
         wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
         wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-        // Tailwind CSS
-        wp_enqueue_style('tailwind-css','https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css');
+        // Tailwind via CDN
+        wp_enqueue_style('tailwind-css','https://cdn.tailwindcss.com', [], null);
 
         // Admin JS
         wp_enqueue_script(
             'wpcb-admin-js',
-            plugin_dir_url(__FILE__) . 'assets/js/admin.js', // correcte locatie
+            plugin_dir_url(__FILE__) . 'assets/js/admin.js',
             ['jquery'],
             null,
             true
@@ -122,7 +89,6 @@ class WPCB_Plugin {
 
         wp_enqueue_script('jquery');
 
-        // DataTables frontend
         wp_enqueue_script('datatables-js','https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js',['jquery'],null,true);
         wp_enqueue_script('datatables-buttons-js','https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js',['jquery','datatables-js'],null,true);
         wp_enqueue_script('datatables-html5-js','https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js',['jquery','datatables-buttons-js'],null,true);
@@ -152,7 +118,8 @@ class WPCB_Plugin {
         if(!wp_verify_nonce($nonce,'wpcb_nonce')) wp_send_json_error('Invalid nonce');
         if(!current_user_can('manage_options')) wp_send_json_error('Permission denied');
 
-        set_transient('wpcb_page_assets',$this->scan_assets(),12*HOUR_IN_SECONDS);
+        $assets = $this->scan_assets();
+        update_option('wpcb_page_assets',$assets);
         wp_send_json_success('Full site scan completed!');
     }
 
@@ -180,6 +147,39 @@ class WPCB_Plugin {
         wp_send_json_success('Object cache flushed');
     }
 
+    public function scan_all_pages(){
+        $nonce = $_POST['nonce'] ?? '';
+        if(!wp_verify_nonce($nonce,'wpcb_nonce')) wp_send_json_error('Invalid nonce');
+        if(!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+
+        $pages = get_posts(['post_type'=>'page','numberposts'=>-1,'post_status'=>'publish']);
+        $all_assets = [];
+
+        foreach($pages as $page){
+            setup_postdata($page);
+            $url = get_permalink($page->ID);
+            $assets = $this->scan_assets($url);
+            $all_assets[$page->ID] = [
+                'title'=>$page->post_title,
+                'url'=>$url,
+                'assets'=>$assets
+            ];
+        }
+        wp_reset_postdata();
+
+        update_option('wpcb_all_pages_assets',$all_assets);
+        wp_send_json_success('All pages scanned and saved.');
+    }
+
+    public function get_all_pages_assets(){
+        $nonce = $_POST['nonce'] ?? '';
+        if(!wp_verify_nonce($nonce,'wpcb_nonce')) wp_send_json_error('Invalid nonce');
+        if(!current_user_can('manage_options')) wp_send_json_error('Permission denied');
+
+        $data = get_option('wpcb_all_pages_assets', []);
+        wp_send_json_success($data);
+    }
+
     // ---------------- Pages Last Edited Column ----------------
     public function add_last_edited_column($columns){
         $columns['last_edited'] = 'Last Edited';
@@ -190,6 +190,19 @@ class WPCB_Plugin {
         if($column === 'last_edited'){
             echo get_post_modified_time('Y-m-d H:i',$post_id);
         }
+    }
+
+    // ---------------- Admin Bar Scan Button ----------------
+    public function add_scan_button_to_admin_bar($wp_admin_bar){
+        if(!current_user_can('manage_options')) return;
+
+        $args = [
+            'id'    => 'wpcb_scan_page',
+            'title' => 'Scan Assets',
+            'href'  => '#',
+            'meta'  => ['class'=>'wpcb-scan-button']
+        ];
+        $wp_admin_bar->add_node($args);
     }
 
     // ---------------- Scan Assets Helper ----------------

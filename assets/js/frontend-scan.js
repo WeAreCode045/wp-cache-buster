@@ -60,7 +60,6 @@ jQuery(document).ready(function($){
     }
 
     $('.wpcb-scan-button').click(function(e){ e.preventDefault(); scan_page(window.location.href); });
-
     $(document).on('click','#wpcb-close-modal',function(){ $('#wpcb-scan-modal').fadeOut(); });
     $(document).on('click','#wpcb-scan-modal',function(e){ if(e.target.id==='wpcb-scan-modal') $(this).fadeOut(); });
 });
