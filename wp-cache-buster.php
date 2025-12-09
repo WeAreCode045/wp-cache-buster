@@ -89,7 +89,7 @@ class WPCB_Plugin {
 
     // Admin page
     public function page_assets(){
-        include plugin_dir_path(__FILE__).'template-assets-page.php';
+        include plugin_dir_path(__FILE__).'templates/template-assets-page.php';
     }
 
     // AJAX flush GoDaddy cache
