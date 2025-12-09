@@ -61,8 +61,8 @@ class WPCB_Plugin {
     wp_enqueue_style('datatables-css','https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css');
     wp_enqueue_style('datatables-buttons-css','https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css');
 
-    // Tailwind in admin
-    wp_enqueue_style('tailwind-admin','https://cdn.jsdelivr.net/npm/tailwindcss@3.3.3/dist/tailwind.min.css', [], null);
+    // Tailwind via Play CDN
+    echo '<script src="https://cdn.tailwindcss.com"></script>';
 
     // Admin JS
     wp_enqueue_script(
@@ -82,6 +82,7 @@ class WPCB_Plugin {
         ]
     ]);
 }
+
 
     // ---------------- Frontend Assets ----------------
     public function load_frontend_assets(){
