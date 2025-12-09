@@ -4,6 +4,9 @@ jQuery(document).ready(function($){
     function initDataTable(){
         if(table) table.destroy(); // destroy alleen als table al bestaat
 
+        // Verberg detail rijen voordat DataTables initialiseert
+        $('.pages-detail').hide();
+
         table = $('#wpcb-assets-table').DataTable({
             dom: 'Bfrtip',
             buttons: [
@@ -17,7 +20,17 @@ jQuery(document).ready(function($){
             columnDefs: [
                 { orderable: false, targets: 0 } // Toggle kolom niet sorteerbaar
             ],
-            order: [[1, 'asc']] // Sorteer op URL kolom
+            order: [[1, 'asc']], // Sorteer op URL kolom
+            createdRow: function(row, data, dataIndex){
+                // Zorg dat detail rijen na de asset rijen blijven
+                var assetId = $(row).data('asset-id');
+                if(assetId){
+                    var detailRow = $('#detail-' + assetId);
+                    if(detailRow.length){
+                        $(row).after(detailRow);
+                    }
+                }
+            }
         });
     }
 
