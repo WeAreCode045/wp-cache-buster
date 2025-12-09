@@ -1,10 +1,74 @@
-jQuery(function($){
-$("#wp-admin-bar-wpcb-scan a").on("click",function(e){
-e.preventDefault();
-$.post(WPCB_SCAN.ajax,{action:"wpcb_scan_url",url:window.location.href,_ajax_nonce:WPCB_SCAN.nonce},function(resp){
-$("#wpcb-scan-output").text(JSON.stringify(resp,null,2));
-$("#wpcb-scan-modal").removeClass('hidden');
-});
-});
-$(document).on("click","#wpcb-close-modal",function(){$("#wpcb-scan-modal").addClass('hidden');});
+jQuery(document).ready(function($){
+    // Modal toevoegen aan body
+    $('body').append(`
+        <div id="wpcb-scan-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-4/5 p-6 relative">
+                <button id="wpcb-close-modal" class="absolute top-2 right-2 text-gray-700 hover:text-gray-900 font-bold text-2xl">&times;</button>
+                <h2 class="text-2xl font-bold mb-4">Page Assets Scan</h2>
+                <table id="wpcb-frontend-assets-table" class="min-w-full table-auto bg-white shadow rounded">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2 border">Type</th>
+                            <th class="px-4 py-2 border">URL</th>
+                            <th class="px-4 py-2 border">Location</th>
+                            <th class="px-4 py-2 border">Group</th>
+                            <th class="px-4 py-2 border">Last Modified</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    `);
+
+    // Open modal en scan
+    $('.wpcb-scan-button').click(function(e){
+        e.preventDefault();
+        var url = window.location.href;
+        $.post(WPCB_SCAN.ajax, {action:'wpcb_scan_url', nonce: WPCB_SCAN.nonce, url: url}, function(r){
+            if(r.success){
+                var tbody = '';
+                ['styles','scripts'].forEach(type => {
+                    if(r.data[type].length){
+                        r.data[type].forEach(a => {
+                            tbody += `<tr>
+                                <td class="px-4 py-2 border">${type}</td>
+                                <td class="px-4 py-2 border break-words">${a.url}</td>
+                                <td class="px-4 py-2 border">${a.location}</td>
+                                <td class="px-4 py-2 border">${a.group}</td>
+                                <td class="px-4 py-2 border">${a.modified}</td>
+                            </tr>`;
+                        });
+                    }
+                });
+                $('#wpcb-frontend-assets-table tbody').html(tbody);
+
+                // Modal tonen
+                $('#wpcb-scan-modal').fadeIn().css('display','flex');
+
+                // DataTable initialiseren
+                if(!$.fn.DataTable.isDataTable('#wpcb-frontend-assets-table')){
+                    $('#wpcb-frontend-assets-table').DataTable({
+                        dom: 'Bfrtip',
+                        buttons: ['copy','csv','excel','pdf','print'],
+                        pageLength: 25
+                    });
+                }
+            } else {
+                alert('Scan failed: '+r.data);
+            }
+        });
+    });
+
+    // Close modal
+    $(document).on('click','#wpcb-close-modal',function(){
+        $('#wpcb-scan-modal').fadeOut();
+    });
+
+    // Click outside modal to close
+    $(document).on('click','#wpcb-scan-modal', function(e){
+        if(e.target.id === 'wpcb-scan-modal'){
+            $(this).fadeOut();
+        }
+    });
 });
