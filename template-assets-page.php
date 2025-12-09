@@ -54,8 +54,9 @@ $assets_option = get_option('wpcb_page_assets', []);
                 foreach($grouped_assets as $key => $asset):
                     $unique_id = md5($key);
                     $page_count = count($asset['pages']);
+                    $pages_json = json_encode($asset['pages']);
                     ?>
-                    <tr class="border-t asset-row" data-asset-id="<?php echo esc_attr($unique_id); ?>">
+                    <tr class="border-t asset-row" data-asset-id="<?php echo esc_attr($unique_id); ?>" data-pages="<?php echo esc_attr($pages_json); ?>">
                         <td class="px-4 py-2 text-center">
                             <button class="toggle-pages text-blue-600 hover:text-blue-800 font-bold" data-target="<?php echo esc_attr($unique_id); ?>">
                                 <span class="toggle-icon">+</span>
@@ -68,22 +69,6 @@ $assets_option = get_option('wpcb_page_assets', []);
                         <td class="px-4 py-2"><?php echo esc_html($asset['modified']); ?></td>
                         <td class="px-4 py-2 text-center">
                             <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold"><?php echo $page_count; ?></span>
-                        </td>
-                    </tr>
-                    <tr class="pages-detail no-datatables" id="detail-<?php echo esc_attr($unique_id); ?>" style="display: none;">
-                        <td colspan="7" class="px-4 py-4 bg-gray-50">
-                            <div class="ml-8">
-                                <h4 class="font-semibold mb-2">Geladen op de volgende pagina's:</h4>
-                                <ul class="list-disc list-inside space-y-1">
-                                    <?php foreach($asset['pages'] as $page): ?>
-                                        <li class="text-sm text-gray-700">
-                                            <a href="<?php echo esc_url($page); ?>" target="_blank" class="text-blue-600 hover:underline">
-                                                <?php echo esc_html($page); ?>
-                                            </a>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </div>
                         </td>
                     </tr>
                     <?php

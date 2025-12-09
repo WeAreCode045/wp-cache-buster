@@ -4,9 +4,6 @@ jQuery(document).ready(function($){
     function initDataTable(){
         if(table) table.destroy(); // destroy alleen als table al bestaat
 
-        // Verberg detail rijen voordat DataTables initialiseert
-        $('.pages-detail').hide();
-
         table = $('#wpcb-assets-table').DataTable({
             dom: 'Bfrtip',
             buttons: [
@@ -20,17 +17,7 @@ jQuery(document).ready(function($){
             columnDefs: [
                 { orderable: false, targets: 0 } // Toggle kolom niet sorteerbaar
             ],
-            order: [[1, 'asc']], // Sorteer op URL kolom
-            createdRow: function(row, data, dataIndex){
-                // Zorg dat detail rijen na de asset rijen blijven
-                var assetId = $(row).data('asset-id');
-                if(assetId){
-                    var detailRow = $('#detail-' + assetId);
-                    if(detailRow.length){
-                        $(row).after(detailRow);
-                    }
-                }
-            }
+            order: [[1, 'asc']] // Sorteer op URL kolom
         });
     }
 
@@ -40,15 +27,41 @@ jQuery(document).ready(function($){
     $(document).on('click', '.toggle-pages', function(e){
         e.preventDefault();
         e.stopPropagation();
-        var targetId = $(this).data('target');
-        var detailRow = $('#detail-' + targetId);
-        var icon = $(this).find('.toggle-icon');
         
-        if(detailRow.is(':visible')){
-            detailRow.hide();
-            icon.text('+');
+        var btn = $(this);
+        var targetId = btn.data('target');
+        var icon = btn.find('.toggle-icon');
+        var assetRow = btn.closest('tr');
+        var detailRow = assetRow.next('tr.detail-row-' + targetId);
+        
+        // Check of detail row al bestaat
+        if(detailRow.length){
+            // Toggle visibility
+            if(detailRow.is(':visible')){
+                detailRow.remove();
+                icon.text('+');
+            } else {
+                detailRow.show();
+                icon.text('-');
+            }
         } else {
-            detailRow.show();
+            // Maak nieuwe detail row
+            var pages = JSON.parse(assetRow.attr('data-pages'));
+            var html = '<tr class="detail-row-' + targetId + '" style="background-color: #f9fafb;">' +
+                '<td colspan="7" class="px-4 py-4">' +
+                '<div class="ml-8">' +
+                '<h4 class="font-semibold mb-2">Geladen op de volgende pagina\'s:</h4>' +
+                '<ul class="list-disc list-inside space-y-1">';
+            
+            pages.forEach(function(page){
+                html += '<li class="text-sm text-gray-700">' +
+                    '<a href="' + page + '" target="_blank" class="text-blue-600 hover:underline">' +
+                    page + '</a></li>';
+            });
+            
+            html += '</ul></div></td></tr>';
+            
+            assetRow.after(html);
             icon.text('-');
         }
     });
